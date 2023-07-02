@@ -96,7 +96,7 @@ bool refreshAccessToken() {
 }
 
 /// ################## API REQUESTS ##################
-// Send a song to play using the Spotify API MANGO
+// Send an album to play using the Spotify API
 void sendToSpotify(String contextURI) {
   String requestData = "{ \"context_uri\": \"" + String(contextURI) + "\" }";
 
@@ -231,18 +231,15 @@ void loop() {
 
     // Check to see if card tapped is controller card
     String controlAction = getControlAction(cardUID);
-
-    // If controller card, control Spotify player
-    // If not controller card, refresh access token,
-    // Turn off shuffle, get corresponding album URI, and send to Spotify
+    
     if (controlAction != "false") {
+      // If controller card, control Spotify player
       controlSpotifyPlayer(controlAction);
     } else {
-      refreshAccessToken();
-      controlSpotifyPlayer("shuffle off");
-      
-      String uri = getAlbumURI(cardUID);
-      sendToSpotify(uri);
+      refreshAccessToken(); // If not controller card, refresh access token
+      controlSpotifyPlayer("shuffle off"); // Turn off shuffle
+      String uri = getAlbumURI(cardUID); // Get corresponding album URI
+      sendToSpotify(uri); // Send URI to Spotify
     }
 
     // Halt PICC
