@@ -12,7 +12,7 @@
 
 const char SPOTIFY_CLIENT[] = SECRET_SPOTIFY_CLIENT;  // Client ID of your Spotify app
 const char SPOTIFY_SECRET[] = SECRET_SPOTIFY_SECRET;  // Client secret of your Spotify app
-String REFRESH_TOKEN = SECRET_REFRESH_TOKEN;          // Client secret of your Spotify app
+String REFRESH_TOKEN = SECRET_REFRESH_TOKEN;          // Refresh token to obtain new access tokens
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Send SS & RST pins
 
@@ -32,6 +32,7 @@ StaticJsonDocument<200> getFilter() {
   return filter;
 }
 
+// Gets link to album tapped
 String getAlbumURI(String cardUID) {
   int index = -1;
 
@@ -50,6 +51,7 @@ String getAlbumURI(String cardUID) {
   }
 }
 
+// Gets action of controller card tapped
 String getControlAction(String cardUID) {
   int index = -1;
 
@@ -61,7 +63,7 @@ String getControlAction(String cardUID) {
   }
 
   if (index != -1) {
-    String controlAction = controllers[index];
+    String controlAction = controlActions[index];
     Serial.println("Control: " + controlAction);
     return controlAction;
   } else {

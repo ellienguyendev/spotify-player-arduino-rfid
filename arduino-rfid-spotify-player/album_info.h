@@ -8,10 +8,10 @@ String albumURIs[] = {
 
 String controllerUIDs[] = {
   // add controller card UIDs here (as strings i.e "0433127011156303")
-  // should have as many elements as control actions in "controllers" array
+  // should have as many elements as control actions in "controlActions" array
 };
 
-String controllers[] = {
+String controlActions[] = {
   "play",
   "pause",
   "previous",
