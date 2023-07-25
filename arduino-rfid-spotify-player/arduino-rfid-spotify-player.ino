@@ -13,14 +13,17 @@
 const char SPOTIFY_CLIENT[] = SECRET_SPOTIFY_CLIENT;  // Client ID of your Spotify app
 const char SPOTIFY_SECRET[] = SECRET_SPOTIFY_SECRET;  // Client secret of your Spotify app
 String REFRESH_TOKEN = SECRET_REFRESH_TOKEN;          // Refresh token to obtain new access tokens
+const unsigned long TOKEN_REFRESH_RATE = 2700000; // Every 45 minutes
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Send SS & RST pins
 
-WiFiSSLClient ssl;                 // Client for Spotify HTTPS requests
+WiFiSSLClient ssl;  // Client for Spotify HTTPS requests
 HttpClient authClient = HttpClient(ssl, "accounts.spotify.com", 443);
 HttpClient apiClient = HttpClient(ssl, "api.spotify.com", 443);
 
 String accessToken;
+unsigned long lastRefreshTime = millis() - TOKEN_REFRESH_RATE; // Variable to keep track of last refresh token time
+
 
 // ################## UTILITY ##################
 // Creates a filter to only get required parameters
@@ -45,7 +48,6 @@ String getAlbumURI(String cardUID) {
 
   if (index != -1) {
     String uri = albumURIs[index];
-
     Serial.println("Sending album URI: " + uri);
     return uri;
   }
@@ -86,6 +88,7 @@ bool refreshAccessToken() {
 
   // If successful
   if (authClient.responseStatusCode() == 200) {
+    lastRefreshTime = millis();
     DynamicJsonDocument json(256);
     deserializeJson(json, authClient.responseBody());
     accessToken = json["access_token"].as<String>();
@@ -112,29 +115,27 @@ void sendToSpotify(String contextURI) {
   apiClient.endRequest();
 
   int statusCode = apiClient.responseStatusCode();
-  String statusMsg = apiClient.responseBody();
 
   // Print the status code
-  Serial.print("Status Code: ");
-  Serial.println(statusCode + statusMsg);
+  Serial.print("Status Code: " + statusCode);
 
   // Check if the request was successful
   if (statusCode == 204) {
-    Serial.println("Song sent to play");
+    Serial.println("Album sent to play successfully");
   } else {
-    Serial.println("Failed to send song to play");
+    Serial.println("Failed to send album to play");
   }
 }
 
 // Skip a song towards a given direction
 void controlSpotifyPlayer(String controlAction) {
-  if (controlAction == "play" || controlAction == "pause"){
+  if (controlAction == "play" || controlAction == "pause") {
     playPause(controlAction);
-  } else if(controlAction == "previous" || controlAction == "next"){
+  } else if (controlAction == "previous" || controlAction == "next") {
     skipSong(controlAction);
-  } else if(controlAction == "shuffle on" || controlAction == "shuffle off"){
+  } else if (controlAction == "shuffle on" || controlAction == "shuffle off") {
     shuffle(controlAction);
-  } else if(controlAction == "volume up" || controlAction == "volume down"){
+  } else if (controlAction == "volume up" || controlAction == "volume down") {
     setVolume(controlAction);
   }
 }
@@ -160,7 +161,7 @@ void skipSong(String controlAction) {
 // Toggle shuffle on/off
 void shuffle(String controlAction) {
   String shuffle = controlAction == "shuffle on" ? "true" : "false";
-    
+
   apiClient.beginRequest();
   apiClient.put("/v1/me/player/shuffle?state=" + shuffle);
   apiClient.sendHeader("Content-Length", 0);
@@ -179,10 +180,10 @@ int getVolume() {
   // If successful and playing (we would've gotten status code 204 otherwise)
   if (statusCode == 200) {
     // Create a filter since the response is too large for our Arduino to handle
-   StaticJsonDocument<200> filter = getFilter();
+    StaticJsonDocument<200> filter = getFilter();
     DynamicJsonDocument json(4096);
     deserializeJson(json, apiClient.responseBody(), DeserializationOption::Filter(filter));
-  
+
     int currentVolume = json["device"]["volume_percent"].as<int>();
     return currentVolume;
   }
@@ -222,6 +223,7 @@ void setup() {
 
 void loop() {
   ArduinoCloud.update();
+
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
     // Get card UID when scanned
     String cardUID = "";
@@ -231,17 +233,22 @@ void loop() {
     }
     Serial.println("Card UID: " + cardUID);
 
+    // Check to see if a new access token is needed
+    if (millis() - lastRefreshTime >= TOKEN_REFRESH_RATE) {
+      Serial.println("Obtaining new access token");
+      refreshAccessToken();
+    }
+
     // Check to see if card tapped is controller card
     String controlAction = getControlAction(cardUID);
-    
+
     if (controlAction != "false") {
       // If controller card, control Spotify player
       controlSpotifyPlayer(controlAction);
     } else {
-      refreshAccessToken(); // If not controller card, refresh access token
-      controlSpotifyPlayer("shuffle off"); // Turn off shuffle
-      String uri = getAlbumURI(cardUID); // Get corresponding album URI
-      sendToSpotify(uri); // Send URI to Spotify
+      // Else, send album to Spotify
+      String uri = getAlbumURI(cardUID);
+      sendToSpotify(uri);
     }
 
     // Halt PICC
