@@ -13,7 +13,7 @@
 const char SPOTIFY_CLIENT[] = SECRET_SPOTIFY_CLIENT;  // Client ID of your Spotify app
 const char SPOTIFY_SECRET[] = SECRET_SPOTIFY_SECRET;  // Client secret of your Spotify app
 String REFRESH_TOKEN = SECRET_REFRESH_TOKEN;          // Refresh token to obtain new access tokens
-const unsigned long TOKEN_REFRESH_RATE = 2700000; // Every 45 minutes
+const unsigned long TOKEN_REFRESH_RATE = 2700000;     // Every 45 minutes
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Send SS & RST pins
 
@@ -22,7 +22,7 @@ HttpClient authClient = HttpClient(ssl, "accounts.spotify.com", 443);
 HttpClient apiClient = HttpClient(ssl, "api.spotify.com", 443);
 
 String accessToken;
-unsigned long lastRefreshTime = millis() - TOKEN_REFRESH_RATE; // Variable to keep track of last refresh token time
+unsigned long lastRefreshTime = millis() - TOKEN_REFRESH_RATE;  // Variable to keep track of last refresh token time
 
 
 // ################## UTILITY ##################
@@ -92,10 +92,10 @@ bool refreshAccessToken() {
     DynamicJsonDocument json(256);
     deserializeJson(json, authClient.responseBody());
     accessToken = json["access_token"].as<String>();
-    Serial.println("Refresh Token Success");
+    Serial.println("Refresh Access Token Success");
     return true;
   } else {
-    Serial.println("Refresh Token Failed");
+    Serial.println("Refresh Access Token Failed");
     return false;
   }
 }
@@ -115,9 +115,12 @@ void sendToSpotify(String contextURI) {
   apiClient.endRequest();
 
   int statusCode = apiClient.responseStatusCode();
+  String statusMsg = apiClient.responseBody();
 
   // Print the status code
-  Serial.print("Status Code: " + statusCode);
+  Serial.print("Status Code: ");
+  Serial.println(statusCode + statusMsg);
+
 
   // Check if the request was successful
   if (statusCode == 204) {
