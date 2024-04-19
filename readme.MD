@@ -3,7 +3,7 @@
 |✨ | Link |
 | ------ | ------ |
 | Youtube| https://www.youtube.com/watch?v=ob6RuAqgfIU |
-| Blog Post| https://holistictech.io/building-a-modern-day-record-player-with-arduino-and-rfid |
+| Blog Post| https://holistictech.notion.site/Build-a-Modern-Day-Record-Player-with-Arduino-and-RFID-Technology-3464c3d5ec04424899d0d8f746942dcc |
 
 This contains 3 sketches that you will upload to your Arduino board and the wiring diagram to reference when configuring our hardware. The first two are used to initialize our projects and Sketch 3 will be the main program that lives on our board.
 
